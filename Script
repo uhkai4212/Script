@@ -1,0 +1,852 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+   Name = "XYZ Hub",LoadingTitle = "\"XYZ Hub\"",LoadingSubtitle = "by xyz hub founders",
+   ConfigurationSaving = {Enabled = false,FolderName="tomato.txt",FileName="Global TAS by tomato.txt"},
+   Discord = {Enabled = false,Invite="8N2M9fHJqa",Theme = "Bloom",RememberJoins=true},KeySystem = true,KeySettings = {Title="Key System 🔑",Subtitle="this is how you get access ",Note="you have to go through some steps to get key or you need to be friends with the owners or devs to give you key",FileName="",SaveKey=true,GrabKeyFromSite=false,Key={"anyonecannotguessthiskeybecauseimbuiltdifferent"}}
+})
+local Tab = Window:CreateTab("Local", "earth")
+
+local Section = Tab:CreateSection("Player")
+
+-- JumpPower Input
+local JumpPowerInput = Tab:CreateInput({
+   Name = "JumpPower",
+   CurrentValue = "",
+   PlaceholderText = "Enter JumpPower",
+   RemoveTextAfterFocusLost = true,
+   Flag = "JumpPowerInput",
+   Callback = function(Text)
+       local newJumpPower = tonumber(Text)
+       if newJumpPower then
+           local player = game.Players.LocalPlayer
+           local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+           if humanoid then
+               humanoid.JumpPower = newJumpPower
+           end
+       else
+           warn("Invalid JumpPower value!")
+       end
+   end,
+})
+
+-- Gravity Input
+local GravityInput = Tab:CreateInput({
+   Name = "Gravity",
+   CurrentValue = "",
+   PlaceholderText = "Enter Gravity",
+   RemoveTextAfterFocusLost = true,
+   Flag = "GravityInput",
+   Callback = function(Text)
+       local newGravity = tonumber(Text)
+       if newGravity then
+           game.Workspace.Gravity = newGravity
+       else
+           warn("Invalid Gravity value!")
+       end
+   end,
+})
+
+-- Field of View (FOV) Input
+local FOVInput = Tab:CreateInput({
+   Name = "Field of View (FOV)",
+   CurrentValue = "",
+   PlaceholderText = "Enter FOV",
+   RemoveTextAfterFocusLost = true,
+   Flag = "FOVInput",
+   Callback = function(Text)
+       local newFOV = tonumber(Text)
+       if newFOV then
+           local player = game.Players.LocalPlayer
+           local camera = game.Workspace.CurrentCamera
+           if camera then
+               camera.FieldOfView = newFOV
+           end
+       else
+           warn("Invalid FOV value!")
+       end
+   end,
+})
+
+local Input = Tab:CreateInput({
+   Name = "WalkSpeed Input",
+   CurrentValue = "",
+   PlaceholderText = "Enter WalkSpeed",
+   RemoveTextAfterFocusLost = true,
+   Flag = "WalkSpeedInput",
+   Callback = function(Text)
+      -- Ensure Text is not empty and is a number
+      local newWalkSpeed = tonumber(Text)
+      if newWalkSpeed and newWalkSpeed > 0 then
+         local player = game.Players.LocalPlayer
+         local character = player.Character or player.CharacterAdded:Wait()
+         local humanoid = character:FindFirstChildOfClass("Humanoid")
+         if humanoid then
+            humanoid.WalkSpeed = newWalkSpeed
+            print("WalkSpeed set to:", newWalkSpeed)
+         else
+            warn("Humanoid not found in character.")
+         end
+      else
+         warn("Invalid WalkSpeed value. Please enter a positive number.")
+      end
+   end,
+})
+
+local Section = Tab:CreateSection("Teleportation")
+
+-- Textbox for coordinate teleportation
+local CoordinateInput = Tab:CreateInput({
+   Name = "Teleport to Coordinates",
+   CurrentValue = "",
+   PlaceholderText = "Enter Coordinates (e.g., 123, -123, 456)",
+   RemoveTextAfterFocusLost = true,
+   Flag = "CoordinateInput",
+   Callback = function(Text)
+       -- Split the input text into X, Y, Z coordinates
+       local coords = {}
+       for coord in string.gmatch(Text, "[-%d.]+") do
+           table.insert(coords, tonumber(coord))
+       end
+
+       if #coords == 3 then
+           local player = game.Players.LocalPlayer
+           local character = player.Character
+           if character and character:FindFirstChild("HumanoidRootPart") then
+               -- Teleport to the specified coordinates
+               character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(unpack(coords)))
+           else
+               warn("Your character's HumanoidRootPart is missing!")
+           end
+       else
+           warn("Invalid coordinates! Please enter in the format: X, Y, Z")
+       end
+   end,
+})
+
+-- Button to teleport to the closest person
+local ClosestPersonButton = Tab:CreateButton({
+   Name = "Teleport to Closest Person",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local myCharacter = player.Character
+       if myCharacter and myCharacter:FindFirstChild("HumanoidRootPart") then
+           local myPosition = myCharacter.HumanoidRootPart.Position
+           local closestPlayer, closestDistance = nil, math.huge
+
+           for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+               if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                   local otherPosition = otherPlayer.Character.HumanoidRootPart.Position
+                   local distance = (myPosition - otherPosition).Magnitude
+                   if distance < closestDistance then
+                       closestDistance = distance
+                       closestPlayer = otherPlayer
+                   end
+               end
+           end
+
+           if closestPlayer then
+               myCharacter.HumanoidRootPart.CFrame = closestPlayer.Character.HumanoidRootPart.CFrame
+           else
+               warn("No valid players to teleport to!")
+           end
+       else
+           warn("Your character or HumanoidRootPart is missing!")
+       end
+   end,
+})
+
+-- Button to teleport to the furthest person
+local FurthestPersonButton = Tab:CreateButton({
+   Name = "Teleport to Furthest Person",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local myCharacter = player.Character
+       if myCharacter and myCharacter:FindFirstChild("HumanoidRootPart") then
+           local myPosition = myCharacter.HumanoidRootPart.Position
+           local furthestPlayer, furthestDistance = nil, 0
+
+           for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+               if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                   local otherPosition = otherPlayer.Character.HumanoidRootPart.Position
+                   local distance = (myPosition - otherPosition).Magnitude
+                   if distance > furthestDistance then
+                       furthestDistance = distance
+                       furthestPlayer = otherPlayer
+                   end
+               end
+           end
+
+           if furthestPlayer then
+               myCharacter.HumanoidRootPart.CFrame = furthestPlayer.Character.HumanoidRootPart.CFrame
+           else
+               warn("No valid players to teleport to!")
+           end
+       else
+           warn("Your character or HumanoidRootPart is missing!")
+       end
+   end,
+})
+
+local Tab = Window:CreateTab("MM2", "utensils-crossed")
+
+local Section = Tab:CreateSection("ESP")
+
+-- ESP Sheriff Toggle
+local SheriffESP = false
+local SheriffToggle = Tab:CreateToggle({
+   Name = "ESP Sheriff",
+   CurrentValue = false,
+   Flag = "ToggleSheriff",
+   Callback = function(Value)
+       SheriffESP = Value
+       -- Loop through all players in the game
+       for _, player in pairs(game.Players:GetPlayers()) do
+           local character = player.Character
+           if character then
+               local gun = character:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun")
+               if gun then
+                   -- Apply highlight effect if the player has the 'Gun'
+                   if SheriffESP then
+                       -- Create or update the highlight effect
+                       if not character:FindFirstChild("Highlight") then
+                           local highlight = Instance.new("Highlight")
+                           highlight.Parent = character
+                           highlight.FillColor = Color3.fromRGB(0, 0, 255)  -- Blue color
+                           highlight.FillTransparency = 0.5
+                       end
+                   else
+                       -- Remove highlight when toggled off
+                       local highlight = character:FindFirstChild("Highlight")
+                       if highlight then
+                           highlight:Destroy()
+                       end
+                   end
+               end
+           end
+       end
+   end,
+})
+
+-- ESP Murd Toggle
+local MurdESP = false
+local MurdToggle = Tab:CreateToggle({
+   Name = "ESP Murd",
+   CurrentValue = false,
+   Flag = "ToggleMurd",
+   Callback = function(Value)
+       MurdESP = Value
+       -- Loop through all players in the game
+       for _, player in pairs(game.Players:GetPlayers()) do
+           local character = player.Character
+           if character then
+               -- Check if the player has the 'Knife' in their backpack or as a model under their name
+               local knife = character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife") or character:FindFirstChild("Knife")
+               if knife then
+                   -- Apply highlight effect if the player has the 'Knife'
+                   if MurdESP then
+                       -- Create or update the highlight effect
+                       if not character:FindFirstChild("Highlight") then
+                           local highlight = Instance.new("Highlight")
+                           highlight.Parent = character
+                           highlight.FillColor = Color3.fromRGB(255, 0, 0)  -- Red color
+                           highlight.FillTransparency = 0.5
+                       end
+                   else
+                       -- Remove highlight when toggled off
+                       local highlight = character:FindFirstChild("Highlight")
+                       if highlight then
+                           highlight:Destroy()
+                       end
+                   end
+               end
+           end
+       end
+   end,
+})
+
+-- ESP Innocent Toggle
+local InnocentESP = false
+local InnocentToggle = Tab:CreateToggle({
+   Name = "ESP Innocent",
+   CurrentValue = false,
+   Flag = "ToggleInnocent",
+   Callback = function(Value)
+       InnocentESP = Value
+       -- Loop through all players in the game
+       for _, player in pairs(game.Players:GetPlayers()) do
+           local character = player.Character
+           if character then
+               -- Check if the player does not have 'Gun' or 'Knife' in their backpack or as models under their name
+               local gun = character:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun")
+               local knife = character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")
+               if not gun and not knife then
+                   -- Apply highlight effect if the player is innocent
+                   if InnocentESP then
+                       -- Create or update the highlight effect
+                       if not character:FindFirstChild("Highlight") then
+                           local highlight = Instance.new("Highlight")
+                           highlight.Parent = character
+                           highlight.FillColor = Color3.fromRGB(0, 255, 0)  -- Green color
+                           highlight.FillTransparency = 0.5
+                       end
+                   else
+                       -- Remove highlight when toggled off
+                       local highlight = character:FindFirstChild("Highlight")
+                       if highlight then
+                           highlight:Destroy()
+                       end
+                   end
+               end
+           end
+       end
+   end,
+})
+
+local Section = Tab:CreateSection("Aimbot (kinda…?)")
+
+-- Look At Murd Toggle
+local LookAtMurd = false
+local MurdTarget = nil  -- Variable to hold the player with the knife
+local MurdToggle = Tab:CreateToggle({
+   Name = "Look At Murd",
+   CurrentValue = false,
+   Flag = "ToggleLookAtMurd",
+   Callback = function(Value)
+       LookAtMurd = Value
+       if LookAtMurd then
+           -- Loop to find the player with the "Knife"
+           for _, player in pairs(game.Players:GetPlayers()) do
+               local character = player.Character
+               if character then
+                   -- Check if the player has the "Knife" in their backpack or as a model under their name
+                   local knife = character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")
+                   if knife then
+                       MurdTarget = character
+                       break  -- Stop once the murderer is found
+                   end
+               end
+           end
+       else
+           MurdTarget = nil  -- Clear the target when toggled off
+       end
+   end,
+})
+
+-- Run the loop to make the camera look at the murderer
+game:GetService("RunService").Heartbeat:Connect(function()
+    if LookAtMurd and MurdTarget then
+        local camera = game.Workspace.CurrentCamera
+        if camera and MurdTarget:FindFirstChild("HumanoidRootPart") then
+            -- Make the camera look at the target
+            camera.CFrame = CFrame.new(camera.CFrame.Position, MurdTarget.HumanoidRootPart.Position)
+        end
+    end
+end)
+
+-- Look At Gun Toggle
+local LookAtGun = false
+local GunTarget = nil  -- Variable to hold the player with the gun
+local GunToggle = Tab:CreateToggle({
+   Name = "Look At Gun",
+   CurrentValue = false,
+   Flag = "ToggleLookAtGun",
+   Callback = function(Value)
+       LookAtGun = Value
+       if LookAtGun then
+           -- Loop to find the player with the "Gun"
+           for _, player in pairs(game.Players:GetPlayers()) do
+               local character = player.Character
+               if character then
+                   -- Check if the player has the "Gun" in their backpack or as a model under their name
+                   local gun = character:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun")
+                   if gun then
+                       GunTarget = character
+                       break  -- Stop once the player with the gun is found
+                   end
+               end
+           end
+       else
+           GunTarget = nil  -- Clear the target when toggled off
+       end
+   end,
+})
+
+-- Run the loop to make the camera look at the player with the gun
+game:GetService("RunService").Heartbeat:Connect(function()
+    if LookAtGun and GunTarget then
+        local camera = game.Workspace.CurrentCamera
+        if camera and GunTarget:FindFirstChild("HumanoidRootPart") then
+            -- Make the camera look at the target
+            camera.CFrame = CFrame.new(camera.CFrame.Position, GunTarget.HumanoidRootPart.Position)
+        end
+    end
+end)
+
+local Section = Tab:CreateSection("Vote")
+
+-- Button to teleport to Vote 1 coordinates
+local Vote1Button = Tab:CreateButton({
+   Name = "Vote 1",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+       
+       if humanoidRootPart then
+           humanoidRootPart.CFrame = CFrame.new(-196, 138, 28)
+       else
+           warn("HumanoidRootPart not found!")
+       end
+   end,
+})
+
+-- Button to teleport to Vote 2 coordinates
+local Vote2Button = Tab:CreateButton({
+   Name = "Vote 2",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+       
+       if humanoidRootPart then
+           humanoidRootPart.CFrame = CFrame.new(-197, 138, 19)
+       else
+           warn("HumanoidRootPart not found!")
+       end
+   end,
+})
+
+-- Button to teleport to Vote 3 coordinates
+local Vote3Button = Tab:CreateButton({
+   Name = "Vote 3",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+       
+       if humanoidRootPart then
+           humanoidRootPart.CFrame = CFrame.new(-196, 138, 10)
+       else
+           warn("HumanoidRootPart not found!")
+       end
+   end,
+})
+
+local Tab = Window:CreateTab("Break In 2", "drama")
+
+local Section = Tab:CreateSection("Teleports")
+
+-- Button to teleport to the base
+local Button1 = Tab:CreateButton({
+   Name = "Teleport to Base",
+   Callback = function()
+       -- Teleport to the given coordinates (-230, 30, -795)
+       game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-230, 30, -795))
+   end,
+})
+
+-- Button to open the kitchen door (teleport to the given coordinates)
+local Button2 = Tab:CreateButton({
+   Name = "Open Kitchen Door",
+   Callback = function()
+       -- Teleport to the given coordinates (-245, 30, -738)
+       game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-245, 30, -738))
+   end,
+})
+
+-- Button to teleport to the shop
+local Button3 = Tab:CreateButton({
+   Name = "Shop",
+   Callback = function()
+       -- Teleport to the given coordinates (-237, 30, -850)
+       game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-237, 30, -850))
+   end,
+})
+
+
+local Section = Tab:CreateSection("Item Giver")
+
+local items = {
+    "Crowbar 1", "Crowbar 2", "Bat", "Pitchfork", "Hammer", "Wrench", "Broom", 
+    "Armor", "Med Kit", "Key", "Gold Key", "Louise", "Lollipop", "Chips", 
+    "Golden Apple", "Pizza", "Gold Pizza", "Rainbow Pizza", "Rainbow Pizza Box", 
+    "Book", "Phone", "Cookie", "Apple", "Bloxy Cola", "Expired Bloxy Cola", 
+    "Bottle", "Ladder", "Battery"
+}
+
+local Dropdown = Tab:CreateDropdown({
+    Name = "Item Dropdown",
+    Options = items,
+    CurrentOption = {"Crowbar 1"},  -- Default option, can be changed
+    MultipleOptions = false,
+    Flag = "ItemDropdown", -- Flag for configuration saving
+    Callback = function(Options)
+        -- The first selected option from the dropdown (Options is a table of selected items)
+        local selectedItem = Options[1] -- Get the first selected option
+        local args = {
+            [1] = selectedItem
+        }
+
+        -- Fire the event with the selected item
+        game:GetService("ReplicatedStorage").Events.GiveTool:FireServer(unpack(args))
+        print("Sent request for item:", selectedItem)
+    end,
+})
+
+local Running = false
+local Frames = {}
+local TimeStart = tick()
+
+local Player = game:GetService("Players").LocalPlayer
+local getChar = function()
+    local Character = Player.Character
+    if Character then
+        return Character
+    else
+        Player.CharacterAdded:Wait()
+        return getChar()
+    end
+end
+
+local Running = false
+local Frames = {}
+local TimeStart = tick()
+
+local Player = game:GetService("Players").LocalPlayer
+local getChar = function()
+    local Character = Player.Character
+    if Character then
+        return Character
+    else
+        Player.CharacterAdded:Wait()
+        return getChar()
+    end
+end
+
+local Running = false
+local Frames = {}
+local TimeStart = tick()
+
+local Player = game:GetService("Players").LocalPlayer
+local getChar = function()
+    local Character = Player.Character
+    if Character then
+        return Character
+    else
+        Player.CharacterAdded:Wait()
+        return getChar()
+    end
+end
+
+local StartRecord = function()
+    Frames = {}
+    Running = true
+    TimeStart = tick()
+    while Running == true do
+        game:GetService("RunService").Heartbeat:Wait()
+        local Character = getChar()
+        table.insert(Frames, {
+            Character.HumanoidRootPart.CFrame,
+            Character.Humanoid:GetState().Value,
+            tick() - TimeStart
+        })
+    end
+end
+
+local StopRecord = function()
+    Running = false
+end
+
+local PlayTAS = function()
+    local Character = getChar()
+    local TimePlay = tick()
+    local FrameCount = #Frames
+    local OldFrame = 1
+    local ReplayFinished = Instance.new("BindableEvent") -- Event to signal replay completion
+
+    local TASLoop
+    TASLoop = game:GetService("RunService").Heartbeat:Connect(function()
+        local CurrentTime = tick()
+        if (CurrentTime - TimePlay) >= Frames[FrameCount][3] then
+            TASLoop:Disconnect()
+            ReplayFinished:Fire() -- Signal that the replay is done
+        end
+
+        for i = OldFrame, OldFrame + 60 do
+            local Frame = Frames[i]
+            if Frame and Frame[3] <= CurrentTime - TimePlay then
+                OldFrame = i
+                Character.HumanoidRootPart.CFrame = Frame[1]
+                Character.Humanoid:ChangeState(Frame[2])
+            end
+        end
+    end)
+
+    ReplayFinished.Event:Wait() -- Wait for the replay to finish
+end
+
+local LoopReplay = false -- Variable to track the state of the toggle
+local ReplayLoopActive = false -- To prevent multiple loops from starting
+
+local Tab = Window:CreateTab("Control", 4483362458)
+local Section = Tab:CreateSection("Save")
+local Button = Tab:CreateButton({
+    Name = "Start Recording",
+    Callback = StartRecord,
+})
+local Button = Tab:CreateButton({
+    Name = "Stop Recording",
+    Callback = StopRecord,
+})
+local Button = Tab:CreateButton({
+    Name = "Play",
+    Callback = PlayTAS,
+})
+
+-- Add the Loop Replay toggle
+local Toggle = Tab:CreateToggle({
+    Name = "Loop Replay",
+    CurrentValue = false,
+    Flag = "LoopReplayToggle", -- Unique flag for the toggle
+    Callback = function(Value)
+        LoopReplay = Value -- Update the LoopReplay variable when toggled
+
+        if LoopReplay and not ReplayLoopActive then
+            ReplayLoopActive = true
+            -- Start infinite replay loop
+            coroutine.wrap(function()
+                while LoopReplay do
+                    PlayTAS() -- Play the replay
+                end
+                ReplayLoopActive = false -- Reset when loop stops
+            end)()
+        end
+    end,
+})
+
+local Tab = Window:CreateTab("Math", "percent")
+
+local Section = Tab:CreateSection("Math")
+
+-- Variables to store user inputs
+local num1 = nil
+local num2 = nil
+
+-- First Number Input
+local Input1 = Tab:CreateInput({
+    Name = "First Number",
+    CurrentValue = "",
+    PlaceholderText = "Enter first number",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Input1",
+    Callback = function(Text)
+        num1 = tonumber(Text) -- Store the first number as a number
+    end,
+})
+
+-- Second Number Input
+local Input2 = Tab:CreateInput({
+    Name = "Second Number",
+    CurrentValue = "",
+    PlaceholderText = "Enter second number",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Input2",
+    Callback = function(Text)
+        num2 = tonumber(Text) -- Store the second number as a number
+    end,
+})
+
+-- Solve Button
+local SolveButton = Tab:CreateButton({
+    Name = "Solve",
+    Callback = function()
+        -- Validate that both numbers are entered before performing calculation
+        if not num1 or not num2 then
+            Rayfield:Notify({
+                Title = "Error",
+                Content = "Please enter both numbers.",
+                Duration = 6.5,
+                Image = 4483362458,
+            })
+            return
+        end
+
+        -- Perform the addition operation (fixed to addition)
+        local result = num1 + num2
+
+        -- Display the result in a notification
+        Rayfield:Notify({
+            Title = "Calculation Result",
+            Content = "The result is: " .. tostring(result),
+            Duration = 6.5,
+            Image = 4483362458,
+        })
+    end,
+})
+
+local Tab = Window:CreateTab("Chat", "message-circle")
+
+local Section = Tab:CreateSection("Chat Spammer")
+
+-- Variables for storing input and toggle state
+local inputText = ""
+local toggleState = false
+
+-- Textbox to input the message
+local Input = Tab:CreateInput({
+    Name = "Input Message",
+    CurrentValue = "",
+    PlaceholderText = "Type your message",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Input1",
+    Callback = function(Text)
+        inputText = Text -- Store the message typed in the textbox
+    end,
+})
+
+-- Toggle to start/stop chat spamming
+local Toggle = Tab:CreateToggle({
+    Name = "Spam Chat Toggle",
+    CurrentValue = false,
+    Flag = "Toggle1",  -- A unique flag for configuration
+    Callback = function(Value)
+        toggleState = Value  -- Update the toggle state
+    end,
+})
+
+-- Function to spam the chat when the toggle is on
+local function spamChat()
+    while toggleState do
+        if inputText ~= "" then
+            game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents")
+                .SayMessageRequest:FireServer(inputText, "All")
+        end
+        wait(1)  -- Delay of 1 second
+    end
+end
+
+-- Start spam function when toggle is enabled
+Toggle.Callback = function(Value)
+    toggleState = Value  -- Update toggle state
+
+    -- If toggle is enabled, start the spam
+    if toggleState then
+        spawn(spamChat)  -- Run the spam chat function in a separate thread
+    end
+end
+
+local Tab = Window:CreateTab("Waypoints", "map-pinned")
+
+local Section = Tab:CreateSection("Waypoints")
+
+-- Initialize variables
+local waypoints = {}  -- Stores the positions and names of all waypoints
+local currentWaypointIndex = 1  -- Index to track the current waypoint
+
+-- Function to create and place waypoints
+local function placeWaypoint()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local waypointName = "Waypoint" .. (#waypoints + 1)  -- Name the new waypoint
+        local position = character.HumanoidRootPart.Position  -- Get current position of the player
+
+        -- Store the waypoint name and position
+        table.insert(waypoints, {Name = waypointName, Position = position})
+
+        -- Notify the user that a waypoint was created
+        Rayfield:Notify({
+            Title = "Waypoint Created",
+            Content = "Waypoint " .. waypointName .. " has been placed.",
+            Duration = 4,
+            Image = 4483362458,
+        })
+    end
+end
+
+-- Function to teleport to a specific waypoint
+local function teleportToWaypoint(index)
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        -- Get the selected waypoint
+        local targetWaypoint = waypoints[index]
+        if targetWaypoint then
+            -- Teleport to the selected waypoint
+            character.HumanoidRootPart.CFrame = CFrame.new(targetWaypoint.Position)
+            Rayfield:Notify({
+                Title = "Teleport Successful",
+                Content = "You have been teleported to " .. targetWaypoint.Name,
+                Duration = 4,
+                Image = 4483362458,
+            })
+        end
+    end
+end
+
+-- Function to delete the most recent waypoint
+local function deleteWaypoint()
+    if #waypoints > 0 then
+        -- Remove the last waypoint from the table
+        local deletedWaypoint = table.remove(waypoints)
+        
+        -- Notify the user that a waypoint was deleted
+        Rayfield:Notify({
+            Title = "Waypoint Deleted",
+            Content = "The most recent waypoint has been deleted.",
+            Duration = 4,
+            Image = 4483362458,
+        })
+
+        -- Update the current waypoint index to the last available waypoint
+        if currentWaypointIndex > #waypoints then
+            currentWaypointIndex = #waypoints
+        end
+    end
+end
+
+-- Button to place waypoints
+local ButtonPlace = Tab:CreateButton({
+    Name = "Place Waypoint",
+    Callback = function()
+        placeWaypoint()  -- Place a new waypoint at current position
+    end,
+})
+
+-- Button to go to the next waypoint
+local ButtonGotoNext = Tab:CreateButton({
+    Name = "Goto Next",
+    Callback = function()
+        if #waypoints > 0 then
+            -- Move to the next waypoint in the list
+            currentWaypointIndex = currentWaypointIndex + 1
+            if currentWaypointIndex > #waypoints then
+                currentWaypointIndex = 1  -- Loop back to the first waypoint if we reach the end
+            end
+            teleportToWaypoint(currentWaypointIndex)  -- Teleport to the next waypoint
+        end
+    end,
+})
+
+-- Button to go to the previous waypoint
+local ButtonGotoPrevious = Tab:CreateButton({
+    Name = "Goto Previous",
+    Callback = function()
+        if #waypoints > 0 then
+            -- Move to the previous waypoint in the list
+            currentWaypointIndex = currentWaypointIndex - 1
+            if currentWaypointIndex < 1 then
+                currentWaypointIndex = #waypoints  -- Loop to the last waypoint if we go before the first one
+            end
+            teleportToWaypoint(currentWaypointIndex)  -- Teleport to the previous waypoint
+        end
+    end,
+})
+
+-- Button to delete the most recent waypoint
+local ButtonDelete = Tab:CreateButton({
+    Name = "Delete Waypoint",
+    Callback = function()
+        deleteWaypoint()  -- Delete the most recent waypoint
+    end,
+})
